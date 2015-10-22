@@ -10,11 +10,16 @@ buildscript {
 	}
 }
 
+plugins {
+    id "com.github.hierynomus.license" version "0.12.0"
+}
+
 // Apply plugin
 apply plugin: 'net.minecraftforge.gradle.forge'
 apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'idea'
+apply plugin: 'license'
 
 // Minimum version of Java required
 sourceCompatibility = '1.6'
@@ -128,5 +133,24 @@ processResources {
             minecraftVersion: minecraft.version,
             forgeVersion: minecraft.forgeVersion
         )
+    }
+}
+
+// Adding headers
+license {
+    header project.file('HEADER.txt')
+    sourceSets = project.sourceSets
+    include '**/*.java'
+
+    strictCheck true
+    ignoreFailures = false
+
+	ext {
+        name = project.name
+        organization = project.organization
+    }
+
+	mapping {
+        java = 'SLASHSTAR_STYLE'
     }
 }
