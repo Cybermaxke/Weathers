@@ -1,13 +1,13 @@
 buildscript {
-	repositories {
-		jcenter()
-		maven {
-			url = 'http://files.minecraftforge.net/maven'
-		}
-	}
-	dependencies {
-		classpath 'net.minecraftforge.gradle:ForgeGradle:2.0-SNAPSHOT'
-	}
+    repositories {
+        jcenter()
+        maven {
+            url = 'http://files.minecraftforge.net/maven'
+        }
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.0-SNAPSHOT'
+    }
 }
 
 plugins {
@@ -44,21 +44,21 @@ forgePlugin.replacer.putReplacement('SRG_DIR', "${net.minecraftforge.gradle.comm
 
 // Repositories
 repositories {
-	mavenCentral()
-	maven {
-		url 'http://repo.spongepowered.org/maven'
-	}
-	maven {
-		url 'http://files.minecraftforge.net/maven'
-	}
+    mavenCentral()
+    maven {
+        url 'http://repo.spongepowered.org/maven'
+    }
+    maven {
+        url 'http://files.minecraftforge.net/maven'
+    }
 }
 
 // Project dependencies
 dependencies {
-	compile "org.spongepowered:mixin:0.4.5-SNAPSHOT"
-	compile("org.spongepowered:spongeforge:${minecraftVersion}-${forgeBuild}-+") {
-		transitive = false
-	}
+    compile "org.spongepowered:mixin:0.4.5-SNAPSHOT"
+    compile("org.spongepowered:spongeforge:${minecraftVersion}-${forgeBuild}-+") {
+        transitive = false
+    }
 }
 
 // The mixin maps
@@ -79,7 +79,7 @@ compileJava {
             "-AoutRefMapFile=${project.mixinRefMap.canonicalPath}",
             "-AreobfSrgFile=${project.file('build/srgs/mcp-srg.srg').canonicalPath}",
             '-AdisableTargetValidator=true',
-			"-Atokens=FORGE=${forgeBuild};FML=${forgeBuild}"
+            "-Atokens=FORGE=${forgeBuild};FML=${forgeBuild}"
     ]
 }
 
@@ -110,16 +110,16 @@ reobfJar.doFirst {
 
 // Set manifest entries
 jar {
-	classifier = ''
-	from project.mixinRefMap
+   classifier = ''
+    from project.mixinRefMap
 
-	manifest {
-		attributes(
+    manifest {
+       attributes(
             'TargetForgeBuild': forgeBuild,
             'TargetForgeVersion': minecraft.forgeVersion,
             'FMLCorePlugin': 'me.cybermaxke.weathers.WeathersCore'
         )
-	}
+    }
 }
 
 // Replace properties in mcmod.info
@@ -128,7 +128,7 @@ processResources {
         include 'mcmod.info'
 
         expand(
-        	name: project.name,
+            name: project.name,
             version: project.version,
             minecraftVersion: minecraft.version,
             forgeVersion: minecraft.forgeVersion
@@ -145,12 +145,12 @@ license {
     strictCheck true
     ignoreFailures = false
 
-	ext {
+    ext {
         name = project.name
         organization = project.organization
     }
 
-	mapping {
+    mapping {
         java = 'SLASHSTAR_STYLE'
     }
 }
