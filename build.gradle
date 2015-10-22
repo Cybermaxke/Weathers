@@ -1,0 +1,132 @@
+buildscript {
+	repositories {
+		jcenter()
+		maven {
+			url = 'http://files.minecraftforge.net/maven'
+		}
+	}
+	dependencies {
+		classpath 'net.minecraftforge.gradle:ForgeGradle:2.0-SNAPSHOT'
+	}
+}
+
+// Apply plugin
+apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+
+// Minimum version of Java required
+sourceCompatibility = '1.6'
+targetCompatibility = '1.6'
+
+// Basic project information
+group = 'cybermaxke'
+archivesBaseName = 'weathers'
+version = '0.1-SNAPSHOT'
+
+// The minecraft version we will use
+ext.minecraftVersion = '1.8'
+// The mcp mappings we will use
+ext.minecraftMappings = 'snapshot_20150301'
+// The forge version we will use
+ext.forgeBuild = '1521'
+
+// The forge plugin instance
+ext.forgePlugin = plugins.getPlugin('net.minecraftforge.gradle.forge')
+// ForgeGradle 2 doesn't provide {SRG_DIR} anymore, we still need it frequently so we'll add it on our own for now
+forgePlugin.replacer.putReplacement('SRG_DIR', "${net.minecraftforge.gradle.common.Constants.DIR_MCP_MAPPINGS}/srgs")
+
+// Repositories
+repositories {
+	mavenCentral()
+	maven {
+		url 'http://repo.spongepowered.org/maven'
+	}
+	maven {
+		url 'http://files.minecraftforge.net/maven'
+	}
+}
+
+// Project dependencies
+dependencies {
+	compile "org.spongepowered:mixin:0.4.5-SNAPSHOT"
+	compile("org.spongepowered:spongeforge:${minecraftVersion}-${forgeBuild}-+") {
+		transitive = false
+	}
+}
+
+// The mixin maps
+ext.mixinSrg = new File(project.buildDir, 'tmp/mixins/mixins.srg')
+// The path is CASE SENSITIVE, so be careful
+ext.mixinRefMap = new File(project.buildDir, "tmp/mixins/mixins.${name.toLowerCase()}.refmap.json")
+
+minecraft.forgeVersion = forgeBuild
+// We cannot strip this from the sponge dependency
+minecraft.mappings = minecraftMappings
+minecraft.runDir = 'run'
+
+// Compile options
+compileJava {
+    options.compilerArgs += [
+            '-Xlint:-processing',
+            "-AoutSrgFile=${project.mixinSrg.canonicalPath}",
+            "-AoutRefMapFile=${project.mixinRefMap.canonicalPath}",
+            "-AreobfSrgFile=${project.file('build/srgs/mcp-srg.srg').canonicalPath}",
+            '-AdisableTargetValidator=true',
+			"-Atokens=FORGE=${forgeBuild};FML=${forgeBuild}"
+    ]
+}
+
+// Copy the current srgs to the build dir so the user doesn't have to go hunting for them
+task copySrgs(type: Copy, dependsOn: 'genSrgs') {
+    from forgePlugin.delayedFile('{SRG_DIR}')
+
+    include '**/*.srg'
+    into 'build/srgs'
+}
+
+// Run copySrgs when setting up the workspace
+setupDecompWorkspace.dependsOn copySrgs
+setupDevWorkspace.dependsOn copySrgs
+compileJava.dependsOn copySrgs
+
+// ForgeGradle 2 fails to apply transformer rules for classes it doesn't know of by default
+// We use the access transformer to make the catalogs in the API accessible
+deobfMcMCP { failOnAtError = false }
+deobfMcSRG { failOnAtError = false }
+
+// Configure reobfuscation for mixins
+reobfJar.doFirst {
+    if (project.mixinSrg.exists()) {
+        addSecondarySrgFile project.mixinSrg
+    }
+}
+
+// Set manifest entries
+jar {
+	classifier = ''
+	from project.mixinRefMap
+
+	manifest {
+		attributes(
+            'TargetForgeBuild': forgeBuild,
+            'TargetForgeVersion': minecraft.forgeVersion,
+            'FMLCorePlugin': 'me.cybermaxke.weathers.WeathersCore'
+        )
+	}
+}
+
+// Replace properties in mcmod.info
+processResources {
+    from('src/main/resources') {
+        include 'mcmod.info'
+
+        expand(
+        	name: project.name,
+            version: project.version,
+            minecraftVersion: minecraft.version,
+            forgeVersion: minecraft.forgeVersion
+        )
+    }
+}

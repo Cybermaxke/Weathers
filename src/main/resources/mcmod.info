@@ -1,0 +1,17 @@
+[
+    {
+        "modid": "${name}",
+        "name": "${name}",
+        "description": "${name} brings more weathers to a vanilla minecraft server.",
+        "version": "${version}",
+        "credits": "Cybermaxke",
+        "logoFile": "",
+        "mcversion": "${minecraftVersion}",
+        "url": "",
+        "updateUrl": "",
+        "authors": [ "Cybermaxke" ],
+        "parent":"",
+        "screenshots": [],
+        "dependencies": []
+    }
+]

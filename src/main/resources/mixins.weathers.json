@@ -1,0 +1,10 @@
+{
+    "required": "true",
+    "package": "me.cybermaxke.weathers.mixin",
+    "refmap": "mixins.weathers.refmap.json",
+    "mixins": [
+        "vanilla.MixinWorld",
+        "vanilla.MixinWorldServer",
+        "sponge.MixinWeather"
+    ]
+}
