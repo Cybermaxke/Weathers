@@ -41,7 +41,7 @@ import me.cybermaxke.weathers.interfaces.IMixinWorldInfo;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.storage.WorldInfo;
 
-@Mixin(net.minecraft.world.World.class)
+@Mixin(value = net.minecraft.world.World.class, priority = 1001)
 public abstract class MixinWorld implements IBlockAccess, World, IMixinWorld {
 
     @Shadow private Random rand;
@@ -80,8 +80,16 @@ public abstract class MixinWorld implements IBlockAccess, World, IMixinWorld {
         }
     }
 
+    @Inject(method = "isThundering()Z", at = @At("HEAD"), cancellable = true)
+    private void onIsThundering(CallbackInfoReturnable<Boolean> ci) {
+        if (!this.isRemote) {
+            IMixinWorldInfo info = (IMixinWorldInfo) this.worldInfo;
+            ci.setReturnValue(info.getWeather().getThunderRate() > 0f && this.isWeatherOptimal());
+        }
+    }
+
     @Inject(method = "getThunderStrength(F)F", at = @At("HEAD"), cancellable = true)
-    private void onIsRaining(float delta, CallbackInfoReturnable<Float> ci) {
+    private void onGetThunderStrength(float delta, CallbackInfoReturnable<Float> ci) {
         if (!this.isRemote) {
             ci.setReturnValue(this.getDarkness());
         }

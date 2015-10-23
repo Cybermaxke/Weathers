@@ -36,7 +36,7 @@ import me.cybermaxke.weathers.interfaces.IMixinWorldInfo;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.storage.WorldInfo;
 
-@Mixin(WorldInfo.class)
+@Mixin(value = WorldInfo.class, priority = 1001)
 public abstract class MixinWorldInfo implements IMixinWorldInfo {
 
     private WeatherType weather;
@@ -64,7 +64,7 @@ public abstract class MixinWorldInfo implements IMixinWorldInfo {
     }
 
     @Inject(method = "updateTagCompound", at = @At("RETURN"))
-    private void onSave(NBTTagCompound nbt, NBTTagCompound playerNbt) {
+    private void onSave(NBTTagCompound nbt, NBTTagCompound playerNbt, CallbackInfo ci) {
         NBTTagCompound data = new NBTTagCompound();
         data.setString("type", this.weather.getId());
         data.setLong("elapsed", this.elapsedWeatherDuration);

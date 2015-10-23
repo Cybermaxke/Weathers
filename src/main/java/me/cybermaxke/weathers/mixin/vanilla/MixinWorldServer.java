@@ -31,12 +31,18 @@ import static me.cybermaxke.weathers.WeatherHelper.getThunderStrengthValue;
 import java.util.Collection;
 import java.util.List;
 
+import org.spongepowered.api.event.SpongeEventFactory;
+import org.spongepowered.api.event.cause.Cause;
+import org.spongepowered.api.event.world.ChangeWorldWeatherEvent;
 import org.spongepowered.api.world.weather.Weather;
 import org.spongepowered.asm.mixin.Implements;
 import org.spongepowered.asm.mixin.Interface;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.common.Sponge;
 
 import com.google.common.collect.Lists;
@@ -57,7 +63,7 @@ import net.minecraft.world.storage.WorldInfo;
 /**
  * For now, just testing if we can keep the world dark.
  */
-@Mixin(WorldServer.class)
+@Mixin(value = WorldServer.class, priority = 1001)
 @Implements(@Interface(iface = org.spongepowered.api.world.World.class, prefix = "sponge$"))
 public abstract class MixinWorldServer extends World implements IThreadListener, IMixinWorld {
 
@@ -148,7 +154,50 @@ public abstract class MixinWorldServer extends World implements IThreadListener,
             this.mcServer.getConfigurationManager().sendPacketToAllPlayersInDimension(
                     new S2BPacketChangeGameState(8, getThunderStrengthValue(this.rainStrength, this.darkness)), this.provider.getDimensionId());
         }
-        
+    }
+
+    // This will work, but it's a method added by forge.
+    // We will try to avoid this to maintain compatible for SpongeVanilla (for the future)
+    /*
+    @Redirect(method = "updateBlocks()V", at = @At(value = "INVOKE", target =
+            "Lnet/minecraft/world/WorldProvider;canDoLightning(Lnet/minecraft/world/chunk/Chunk)Z", ordinal = 0, remap = false))
+    private boolean onCanDoLightning(WorldProvider this$0, Chunk chunk) {
+        boolean result = this$0.canDoLightning(chunk);
+        if (result) {
+            float chance = ((IMixinWorldInfo) this.worldInfo).getWeather().getLightningRate();
+            if (chance == 0f) {
+                result = false;
+            }
+        }
+        return result;
+    }
+    */
+
+    @ModifyArg(method = "updateBlocks()V", at = @At(value = "INVOKE", target =
+            "Ljava/util/Random;nextInt(I)I", ordinal = 0, remap = false))
+    private int onCheckLightningChance(int value) {
+        float chance = ((IMixinWorldInfo) this.worldInfo).getWeather().getLightningRate();
+        // Will be ignored in the next call
+        // This is only needed if the above check isn't used
+        if (chance == 0f) {
+            return 1;
+        }
+        long result = (long) (1f / chance);
+        return (int) Math.min(result, Integer.MAX_VALUE);
+    }
+
+    // This is only needed if the other onCanDoLightning check isn't used
+    @Redirect(method = "updateBlocks()V", at = @At(value = "INVOKE", target =
+            "Lnet/minecraft/world/World;isRaining()Z", ordinal = 0))
+    private boolean onCanDoLightning(World this$0) {
+        boolean result = this$0.isRaining();
+        if (result) {
+            float chance = ((IMixinWorldInfo) this.worldInfo).getWeather().getLightningRate();
+            if (chance == 0f) {
+                result = false;
+            }
+        }
+        return result;
     }
 
     protected Collection<WeatherType> getWeatherTypes() {
@@ -192,11 +241,21 @@ public abstract class MixinWorldServer extends World implements IThreadListener,
         this.forecast(weather, duration, false);
     }
 
-    public void forecast(Weather weather0, long duration, boolean event) {
+    public void forecast(Weather weather0, long duration0, boolean event) {
         IMixinWorldInfo info = (IMixinWorldInfo) this.worldInfo;
 
         WeatherType weather = (WeatherType) checkNotNull(weather0, "weather");
         WeatherType current = info.getWeather();
+
+        int duration = (int) Math.min(Integer.MAX_VALUE, duration0);
+        if (event) {
+            ChangeWorldWeatherEvent weatherEvent = SpongeEventFactory.createChangeWorldWeatherEvent(Sponge.getGame(),
+                    Cause.empty(), duration, duration, weather, weather, weather, (org.spongepowered.api.world.World) this);
+            Sponge.getGame().getEventManager().post(weatherEvent);
+            current = (WeatherType) weatherEvent.getWeather();
+            duration = weatherEvent.getDuration();
+            duration0 = duration;
+        }
 
         boolean rain = weather.getRainStrength() > 0f;
         boolean thunder = weather.getThunderRate() > 0f;
@@ -209,10 +268,10 @@ public abstract class MixinWorldServer extends World implements IThreadListener,
         long elapsed = 0;
         if (weather == current) {
             elapsed = info.getElapsedWeatherDuration();
-            duration = elapsed + info.getWeatherDuration();
+            duration0 = elapsed + info.getWeatherDuration();
         }
 
         info.setElapsedWeatherDuration(elapsed);
-        info.setWeatherDuration(duration);
+        info.setWeatherDuration(duration0);
     }
 }

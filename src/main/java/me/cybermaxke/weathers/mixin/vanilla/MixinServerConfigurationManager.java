@@ -38,7 +38,7 @@ import net.minecraft.server.management.ServerConfigurationManager;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.border.WorldBorder;
 
-@Mixin(ServerConfigurationManager.class)
+@Mixin(value = ServerConfigurationManager.class, priority = 1001)
 public abstract class MixinServerConfigurationManager {
 
     /**
@@ -49,8 +49,8 @@ public abstract class MixinServerConfigurationManager {
     public void updateTimeAndWeatherForPlayer(EntityPlayerMP playerIn, WorldServer worldIn) {
         WorldBorder worldborder = worldIn.getWorldBorder();
         playerIn.playerNetServerHandler.sendPacket(new S44PacketWorldBorder(worldborder, S44PacketWorldBorder.Action.INITIALIZE));
-        playerIn.playerNetServerHandler.sendPacket(new S03PacketTimeUpdate(worldIn.getTotalWorldTime(), worldIn.getWorldTime(), worldIn
-                .getGameRules().getGameRuleBooleanValue("doDaylightCycle")));
+        playerIn.playerNetServerHandler.sendPacket(new S03PacketTimeUpdate(worldIn.getTotalWorldTime(), worldIn.getWorldTime(),
+                worldIn.getGameRules().getGameRuleBooleanValue("doDaylightCycle")));
 
         IMixinWorld world = (IMixinWorld) worldIn;
         playerIn.playerNetServerHandler.sendPacket(new S2BPacketChangeGameState(1, 0.0F));
