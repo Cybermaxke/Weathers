@@ -111,7 +111,7 @@ reobfJar.doFirst {
 // Set manifest entries
 jar {
    classifier = ''
-    from project.mixinRefMap
+   from project.mixinRefMap
 
     manifest {
        attributes(

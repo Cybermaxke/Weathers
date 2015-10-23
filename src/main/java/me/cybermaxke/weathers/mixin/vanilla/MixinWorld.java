@@ -23,12 +23,67 @@
  */
 package me.cybermaxke.weathers.mixin.vanilla;
 
+import java.util.Random;
+
+import org.spongepowered.api.world.World;
+import org.spongepowered.api.world.weather.Weather;
+import org.spongepowered.api.world.weather.Weathers;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import me.cybermaxke.weathers.api.WeatherType;
+import me.cybermaxke.weathers.interfaces.IMixinWorld;
+import me.cybermaxke.weathers.interfaces.IMixinWorldInfo;
 import net.minecraft.world.IBlockAccess;
-import net.minecraft.world.World;
+import net.minecraft.world.storage.WorldInfo;
 
-@Mixin(World.class)
-public abstract class MixinWorld implements IBlockAccess {
+@Mixin(net.minecraft.world.World.class)
+public abstract class MixinWorld implements IBlockAccess, World, IMixinWorld {
 
+    @Shadow private Random rand;
+    @Shadow private WorldInfo worldInfo;
+    @Shadow private boolean isRemote;
+
+    @Overwrite
+    protected void calculateInitialWeather() {
+        IMixinWorldInfo info = (IMixinWorldInfo) this.worldInfo;
+        if (info.getWeather() == null) {
+            Weather weather;
+            int duration;
+            int rainTime = this.worldInfo.getRainTime();
+            int thunderTime = this.worldInfo.getThunderTime();
+            if (rainTime <= 0) {
+                weather = Weathers.CLEAR;
+                duration = this.worldInfo.getCleanWeatherTime();
+            } else if (thunderTime > 0) {
+                weather = Weathers.THUNDER_STORM;
+                duration = Math.min(rainTime, thunderTime);
+            } else {
+                weather = Weathers.RAIN;
+                duration = rainTime;
+            }
+            info.setWeather((WeatherType) weather);
+            info.setWeatherDuration(duration);
+            info.setElapsedWeatherDuration(0);
+        }
+        this.initWeatherVolume();
+    }
+
+    @Inject(method = "isRaining()Z", at = @At("HEAD"), cancellable = true)
+    private void onIsRaining(CallbackInfoReturnable<Boolean> ci) {
+        if (!this.isRemote) {
+            ci.setReturnValue(this.getRainStrength() > 0.2f);
+        }
+    }
+
+    @Inject(method = "getThunderStrength(F)F", at = @At("HEAD"), cancellable = true)
+    private void onIsRaining(float delta, CallbackInfoReturnable<Float> ci) {
+        if (!this.isRemote) {
+            ci.setReturnValue(this.getDarkness());
+        }
+    }
 }

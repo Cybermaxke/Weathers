@@ -23,10 +23,30 @@
  */
 package me.cybermaxke.weathers.mixin.vanilla;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static me.cybermaxke.weathers.WeatherHelper.FADE_SPEED;
+import static me.cybermaxke.weathers.WeatherHelper.getRainStrengthValue;
+import static me.cybermaxke.weathers.WeatherHelper.getThunderStrengthValue;
+
+import java.util.Collection;
+import java.util.List;
+
+import org.spongepowered.api.world.weather.Weather;
+import org.spongepowered.asm.mixin.Implements;
+import org.spongepowered.asm.mixin.Interface;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.common.Sponge;
+
+import com.google.common.collect.Lists;
+
+import me.cybermaxke.weathers.api.WeatherType;
+import me.cybermaxke.weathers.interfaces.IMixinWorld;
+import me.cybermaxke.weathers.interfaces.IMixinWorldInfo;
+import net.minecraft.network.play.server.S2BPacketChangeGameState;
 import net.minecraft.profiler.Profiler;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.IThreadListener;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldProvider;
@@ -38,36 +58,161 @@ import net.minecraft.world.storage.WorldInfo;
  * For now, just testing if we can keep the world dark.
  */
 @Mixin(WorldServer.class)
-public abstract class MixinWorldServer extends World implements IThreadListener {
+@Implements(@Interface(iface = org.spongepowered.api.world.World.class, prefix = "sponge$"))
+public abstract class MixinWorldServer extends World implements IThreadListener, IMixinWorld {
 
-    private float darkness = 1.5f;
+    @Shadow private MinecraftServer mcServer;
+
+    private float darknessTarget;
+    private float darkness;
+
+    private float rainStrengthTarget;
+    private float rainStrength;
 
     protected MixinWorldServer(ISaveHandler saveHandler, WorldInfo worldInfo, WorldProvider worldProvider,
             Profiler profiler, boolean client) {
         super(saveHandler, worldInfo, worldProvider, profiler, client);
     }
 
-    @ModifyArg(method = "updateWeather()V", at = @At(value = "INVOKE", target =
-            "Lnet/minecraft/network/play/server/S2BPacketChangeGameState;<init>(IF)V", ordinal = 0, remap = false))
-    private float onGetValue0(int type, float value) {
-        return value < 0.01f ? 0.01f : value;
+    @Override
+    public boolean isWeatherOptimal() {
+        return Math.abs(this.darknessTarget - this.darkness) <= 0.1f &&
+                Math.abs(this.rainStrengthTarget - this.rainStrength) <= 0.1f;
     }
 
-    @ModifyArg(method = "updateWeather()V", at = @At(value = "INVOKE", target =
-            "Lnet/minecraft/network/play/server/S2BPacketChangeGameState;<init>(IF)V", ordinal = 1, remap = false))
-    private float onGetValue1(int type, float value) {
-        return this.darkness / (value < 0.01f ? 0.01f : value);
+    @Override
+    public void initWeatherVolume() {
+        IMixinWorldInfo info = (IMixinWorldInfo) this.worldInfo;
+        WeatherType current = info.getWeather();
+
+        this.rainStrength = current.getRainStrength();
+        this.rainStrengthTarget = this.rainingStrength;
+
+        this.darkness = current.getDarkness();
+        this.darknessTarget = this.darkness;
     }
 
-    @ModifyArg(method = "updateWeather()V", at = @At(value = "INVOKE", target =
-            "Lnet/minecraft/network/play/server/S2BPacketChangeGameState;<init>(IF)V", ordinal = 4, remap = false))
-    private float onGetValue4(int type, float value) {
-        return value < 0.01f ? 0.01f : value;
+    @Override
+    public float getRainStrength() {
+        return this.rainStrength;
     }
 
-    @ModifyArg(method = "updateWeather()V", at = @At(value = "INVOKE", target =
-            "Lnet/minecraft/network/play/server/S2BPacketChangeGameState;<init>(IF)V", ordinal = 5, remap = false))
-    private float onGetValue5(int type, float value) {
-        return this.darkness / (value < 0.01f ? 0.01f : value);
+    @Override
+    public float getDarkness() {
+        return this.darkness;
+    }
+
+    @Overwrite
+    @Override
+    protected void updateWeather() {
+        IMixinWorldInfo info = (IMixinWorldInfo) this.worldInfo;
+
+        long duration = info.getWeatherDuration();
+        long elapsedDuration = info.getElapsedWeatherDuration();
+
+        if (++elapsedDuration >= duration) {
+            this.forecast(this.getRandomWeather(info.getWeather()), true);
+        } else {
+            int rainTime = this.worldInfo.getRainTime();
+            if (rainTime-- > 0) {
+                this.worldInfo.setRainTime(rainTime);
+            }
+            int thunderTime = this.worldInfo.getThunderTime();
+            if (thunderTime-- > 0) {
+                this.worldInfo.setThunderTime(thunderTime);
+            }
+            int clearTime = this.worldInfo.getCleanWeatherTime();
+            if (clearTime-- > 0) {
+                this.worldInfo.setCleanWeatherTime(clearTime);
+            }
+        }
+        if (this.rainStrength != this.rainStrengthTarget) {
+            if (Math.abs(this.rainStrength - this.rainStrengthTarget) < FADE_SPEED) {
+                this.rainStrength = this.rainStrengthTarget;
+            } else if (this.rainStrength > this.rainStrengthTarget) {
+                this.rainStrength -= FADE_SPEED;
+            } else {
+                this.rainStrength += FADE_SPEED;
+            }
+            this.mcServer.getConfigurationManager().sendPacketToAllPlayersInDimension(
+                    new S2BPacketChangeGameState(7, getRainStrengthValue(this.rainStrength)), this.provider.getDimensionId());
+        }
+        if (this.darkness != this.darknessTarget) {
+            if (Math.abs(this.darkness - this.darknessTarget) < FADE_SPEED) {
+                this.darkness = this.darknessTarget;
+            } else if (this.darkness > this.darknessTarget) {
+                this.darkness -= FADE_SPEED;
+            } else {
+                this.darkness += FADE_SPEED;
+            }
+            this.mcServer.getConfigurationManager().sendPacketToAllPlayersInDimension(
+                    new S2BPacketChangeGameState(8, getThunderStrengthValue(this.rainStrength, this.darkness)), this.provider.getDimensionId());
+        }
+        
+    }
+
+    protected Collection<WeatherType> getWeatherTypes() {
+        return Sponge.getGame().getRegistry().getAllOf(WeatherType.class);
+    }
+
+    private WeatherType getRandomWeather(WeatherType ignore) {
+        List<WeatherType> weathers = Lists.newArrayList(this.getWeatherTypes());
+        while (weathers.size() > 1) {
+            WeatherType next = weathers.remove(this.rand.nextInt(weathers.size()));
+            if (next != ignore) {
+                return next;
+            }
+        }
+        return weathers.isEmpty() ? ignore : weathers.get(0);
+    }
+
+    public long sponge$getRemainingDuration() {
+        IMixinWorldInfo info = (IMixinWorldInfo) this.worldInfo;
+        return info.getWeatherDuration() - info.getElapsedWeatherDuration();
+    }
+
+    public long sponge$getRunningDuration() {
+        IMixinWorldInfo info = (IMixinWorldInfo) this.worldInfo;
+        return info.getElapsedWeatherDuration();
+    }
+
+    public Weather sponge$getWeather() {
+        return ((IMixinWorldInfo) this.worldInfo).getWeather();
+    }
+
+    public void sponge$forecast(Weather weather) {
+        this.forecast(weather, false);
+    }
+
+    public void forecast(Weather weather, boolean event) {
+        this.forecast(weather, (300 + this.rand.nextInt(600)) * 20, event);
+    }
+
+    public void sponge$forecast(Weather weather, long duration) {
+        this.forecast(weather, duration, false);
+    }
+
+    public void forecast(Weather weather0, long duration, boolean event) {
+        IMixinWorldInfo info = (IMixinWorldInfo) this.worldInfo;
+
+        WeatherType weather = (WeatherType) checkNotNull(weather0, "weather");
+        WeatherType current = info.getWeather();
+
+        boolean rain = weather.getRainStrength() > 0f;
+        boolean thunder = weather.getThunderRate() > 0f;
+
+        this.worldInfo.setRaining(rain);
+        this.worldInfo.setRainTime(rain ? (int) duration : 0);
+        this.worldInfo.setThundering(thunder);
+        this.worldInfo.setThunderTime(thunder ? (int) duration : 0);
+
+        long elapsed = 0;
+        if (weather == current) {
+            elapsed = info.getElapsedWeatherDuration();
+            duration = elapsed + info.getWeatherDuration();
+        }
+
+        info.setElapsedWeatherDuration(elapsed);
+        info.setWeatherDuration(duration);
     }
 }
