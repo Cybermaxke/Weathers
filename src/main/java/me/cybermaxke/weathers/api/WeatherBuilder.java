@@ -23,22 +23,21 @@
  */
 package me.cybermaxke.weathers.api;
 
-import java.util.List;
+public interface WeatherBuilder {
 
-import org.spongepowered.api.util.annotation.CatalogedBy;
-import org.spongepowered.api.world.weather.Weather;
-import org.spongepowered.api.world.weather.Weathers;
+    WeatherBuilder plugin(Object plugin);
 
-@CatalogedBy(Weathers.class)
-public interface WeatherType extends Weather {
+    WeatherBuilder name(String name);
 
-    List<String> getAliases();
+    WeatherBuilder alias(String alias);
 
-    float getLightningRate();
+    WeatherBuilder rainStrength(float rainStrength);
 
-    float getThunderRate();
+    WeatherBuilder darkness(float darkness);
 
-    float getDarkness();
+    WeatherBuilder lightningRate(float lightningRate);
 
-    float getRainStrength();
+    WeatherBuilder thunderRate(float thunderRate);
+
+    WeatherType buildAndRegister();
 }

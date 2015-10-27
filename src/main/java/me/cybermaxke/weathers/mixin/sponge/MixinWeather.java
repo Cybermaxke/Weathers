@@ -30,9 +30,7 @@ import me.cybermaxke.weathers.interfaces.IMixinWeather;
 
 import org.spongepowered.api.world.weather.Weather;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.common.weather.SpongeWeather;
 
 import com.google.common.collect.ImmutableList;
@@ -50,17 +48,18 @@ public abstract class MixinWeather implements Weather, IMixinWeather {
     private String commandMessage;
     private String identifier;
 
+    @Override
     public void setCustomIdentifier(String identifier) {
         this.identifier = identifier;
     }
 
-    @Inject(method = "getId()Ljava/lang/String;", at = @At("RETURN"), cancellable = true)
-    private void onGetId(CallbackInfoReturnable<String> ci) {
+    @Overwrite
+    @Override
+    public String getId() {
         if (this.identifier != null) {
-            ci.setReturnValue(this.identifier);
+            return this.identifier;
         } else {
-            // Fix the sponge id, must be lowercase
-            ci.setReturnValue(ci.getReturnValue().toLowerCase());
+            return "minecraft:" + this.getName();
         }
     }
 

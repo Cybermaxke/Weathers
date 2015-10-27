@@ -21,24 +21,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package me.cybermaxke.weathers.api;
+package me.cybermaxke.weathers;
 
-import java.util.List;
+import me.cybermaxke.weathers.api.WeatherBuilder;
+import me.cybermaxke.weathers.api.WeatherService;
 
-import org.spongepowered.api.util.annotation.CatalogedBy;
-import org.spongepowered.api.world.weather.Weather;
-import org.spongepowered.api.world.weather.Weathers;
+public final class SimpleWeatherService implements WeatherService {
 
-@CatalogedBy(Weathers.class)
-public interface WeatherType extends Weather {
-
-    List<String> getAliases();
-
-    float getLightningRate();
-
-    float getThunderRate();
-
-    float getDarkness();
-
-    float getRainStrength();
+    @Override
+    public WeatherBuilder createBuilder() {
+        return new SimpleWeatherBuilder();
+    }
 }

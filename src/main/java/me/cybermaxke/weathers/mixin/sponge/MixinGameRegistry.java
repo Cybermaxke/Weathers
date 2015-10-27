@@ -26,6 +26,7 @@ package me.cybermaxke.weathers.mixin.sponge;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+import java.util.Collection;
 import java.util.Map;
 
 import me.cybermaxke.weathers.api.WeatherType;
@@ -41,11 +42,14 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.common.registry.SpongeGameRegistry;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 @Mixin(value = SpongeGameRegistry.class, remap = false)
 public abstract class MixinGameRegistry implements GameRegistry, IMixinGameRegistry {
@@ -62,6 +66,11 @@ public abstract class MixinGameRegistry implements GameRegistry, IMixinGameRegis
         builder.putAll(this.catalogTypeMap);
         builder.put(WeatherType.class, this.weatherMappings);
         this.catalogTypeMap = builder.build();
+        // Sponge has only a lookup by the name of the weather,
+        // we will also add the by identifier
+        for (Weather weather : Sets.newHashSet(this.weatherMappings.values())) {
+            this.weatherMappings.put(weather.getId().toLowerCase(), weather);
+        }
         // Original id will override the aliases
         this.aliases = Maps.newHashMap((Map) this.weatherMappings);
         // Add some default aliases and command messages
@@ -81,14 +90,26 @@ public abstract class MixinGameRegistry implements GameRegistry, IMixinGameRegis
         this.addAliases(Weathers.CLEAR);
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Inject(method = "getAllOf", at = @At("HEAD"), remap = false, cancellable = true)
+    private <T extends CatalogType> void onGetAllOf(Class<T> typeClass, CallbackInfoReturnable<Collection<T>> ci) {
+        // The sponge implementation is using a list which will add our weathers twice
+        if (checkNotNull(typeClass, "null type class").isAssignableFrom(Weather.class)) {
+            ci.setReturnValue((Collection) ImmutableSet.copyOf(this.weatherMappings.values()));
+        }
+    }
+
     @Override
     public void registerWeather(WeatherType weatherType) {
         checkNotNull(weatherType, "weatherType");
         String id = weatherType.getId().toLowerCase();
         checkState(this.weatherMappings.containsKey(weatherType.getId()),
                 "identifier is already used: " + weatherType.getId());
+        String name = weatherType.getName().toLowerCase();
         this.weatherMappings.put(id, weatherType);
+        this.weatherMappings.put(name, weatherType);
         this.aliases.put(id, weatherType);
+        this.aliases.put(name, weatherType);
         this.addAliases(weatherType);
     }
 

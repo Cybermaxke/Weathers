@@ -206,7 +206,7 @@ public abstract class MixinWorldServer extends World implements IThreadListener,
     @Redirect(method = "updateBlocks()V", at = @At(value = "INVOKE", target =
             "Lnet/minecraft/world/World;isThundering()Z", ordinal = 0))
     private boolean onCanDoLightning1(World this$0) {
-        // Just return false, this is already handled by isRaining()
+        // Just return true, this is already handled by isRaining()
         return true;
     }
 

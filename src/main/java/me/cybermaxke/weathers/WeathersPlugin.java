@@ -25,13 +25,15 @@ package me.cybermaxke.weathers;
 
 import static me.cybermaxke.weathers.WeathersInfo.NAME;
 import static me.cybermaxke.weathers.WeathersInfo.VERSION;
+import me.cybermaxke.weathers.api.WeatherService;
 
 import org.slf4j.Logger;
-
+import org.spongepowered.api.Game;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.service.ProviderExistsException;
 
 import com.google.inject.Inject;
 
@@ -49,7 +51,19 @@ public final class WeathersPlugin {
         return instance.logger;
     }
 
-    @Inject Logger logger;
+    /**
+     * Gets the {@link Game}.
+     * 
+     * @return the game
+     */
+    public static Game game() {
+        return instance.game;
+    }
+
+    @Inject private Logger logger;
+    @Inject private Game game;
+
+    private WeatherService weatherService;
 
     @Inject
     private WeathersPlugin() {
@@ -59,6 +73,16 @@ public final class WeathersPlugin {
     @Listener
     public void onGamePreInitialization(GamePreInitializationEvent e) {
         this.logger.info("Loading...");
+
+        // Create the weather service
+        this.weatherService = new SimpleWeatherService();
+
+        // Set the weather service
+        try {
+            this.game.getServiceManager().setProvider(this, WeatherService.class, this.weatherService);
+        } catch (ProviderExistsException ex) {
+            throw new IllegalStateException("The WeatherService is overriden by an unknown source.", ex);
+        }
     }
 
     @Listener
