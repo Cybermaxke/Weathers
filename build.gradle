@@ -35,7 +35,9 @@ ext.minecraftVersion = '1.8'
 // The mcp mappings we will use
 ext.minecraftMappings = 'snapshot_20150301'
 // The forge version we will use
-ext.forgeBuild = '1521'
+ext.forgeBuild = '1524'
+// The sponge version
+ext.spongeVersion = '2.1-DEV-762'
 
 // The forge plugin instance
 ext.forgePlugin = plugins.getPlugin('net.minecraftforge.gradle.forge')
@@ -49,14 +51,15 @@ repositories {
         url 'http://repo.spongepowered.org/maven'
     }
     maven {
-        url 'http://files.minecraftforge.net/maven'
+       url 'http://files.minecraftforge.net/maven'
     }
 }
 
 // Project dependencies
 dependencies {
-    compile "org.spongepowered:mixin:0.4.5-SNAPSHOT"
-    compile("org.spongepowered:spongeforge:${minecraftVersion}-${forgeBuild}-+") {
+    compile "org.spongepowered:mixin:0.4.6-SNAPSHOT"
+    // TODO: Get the de-obfuscated jar?
+    compile("org.spongepowered:spongeforge:${minecraftVersion}-${forgeBuild}-${spongeVersion}") {
         transitive = false
     }
 }
@@ -117,7 +120,8 @@ jar {
        attributes(
             'TargetForgeBuild': forgeBuild,
             'TargetForgeVersion': minecraft.forgeVersion,
-            'FMLCorePlugin': 'me.cybermaxke.weathers.WeathersCore'
+            'FMLCorePlugin': 'me.cybermaxke.weathers.WeathersCore',
+            'FMLCorePluginContainsFMLMod':true
         )
     }
 }

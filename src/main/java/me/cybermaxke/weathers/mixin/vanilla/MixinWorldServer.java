@@ -47,6 +47,7 @@ import org.spongepowered.common.Sponge;
 
 import com.google.common.collect.Lists;
 
+import me.cybermaxke.weathers.WeathersPlugin;
 import me.cybermaxke.weathers.api.WeatherType;
 import me.cybermaxke.weathers.interfaces.IMixinWorld;
 import me.cybermaxke.weathers.interfaces.IMixinWorldInfo;
@@ -60,9 +61,6 @@ import net.minecraft.world.WorldServer;
 import net.minecraft.world.storage.ISaveHandler;
 import net.minecraft.world.storage.WorldInfo;
 
-/**
- * For now, just testing if we can keep the world dark.
- */
 @Mixin(value = WorldServer.class, priority = 1001)
 @Implements(@Interface(iface = org.spongepowered.api.world.World.class, prefix = "sponge$"))
 public abstract class MixinWorldServer extends World implements IThreadListener, IMixinWorld {
@@ -88,14 +86,21 @@ public abstract class MixinWorldServer extends World implements IThreadListener,
 
     @Override
     public void initWeatherVolume() {
+        WeathersPlugin.log().debug("Initializing weather volume");
+
         IMixinWorldInfo info = (IMixinWorldInfo) this.worldInfo;
         WeatherType current = info.getWeather();
 
         this.rainStrength = current.getRainStrength();
-        this.rainStrengthTarget = this.rainingStrength;
+        this.rainStrengthTarget = this.rainStrength;
 
         this.darkness = current.getDarkness();
         this.darknessTarget = this.darkness;
+    }
+
+    @Override
+    public float getTargetRainStrength() {
+        return this.rainStrengthTarget;
     }
 
     @Override
@@ -119,18 +124,16 @@ public abstract class MixinWorldServer extends World implements IThreadListener,
         if (++elapsedDuration >= duration) {
             this.forecast(this.getRandomWeather(info.getWeather()), true);
         } else {
-            int rainTime = this.worldInfo.getRainTime();
-            if (rainTime-- > 0) {
-                this.worldInfo.setRainTime(rainTime);
+            if (this.worldInfo.rainTime > 0) {
+                this.worldInfo.rainTime--;
             }
-            int thunderTime = this.worldInfo.getThunderTime();
-            if (thunderTime-- > 0) {
-                this.worldInfo.setThunderTime(thunderTime);
+            if (this.worldInfo.thunderTime > 0) {
+                this.worldInfo.thunderTime--;
             }
-            int clearTime = this.worldInfo.getCleanWeatherTime();
-            if (clearTime-- > 0) {
-                this.worldInfo.setCleanWeatherTime(clearTime);
+            if (this.worldInfo.cleanWeatherTime > 0) {
+                this.worldInfo.cleanWeatherTime--;
             }
+            info.setElapsedWeatherDuration(elapsedDuration);
         }
         if (this.rainStrength != this.rainStrengthTarget) {
             if (Math.abs(this.rainStrength - this.rainStrengthTarget) < FADE_SPEED) {
@@ -189,7 +192,7 @@ public abstract class MixinWorldServer extends World implements IThreadListener,
     // This is only needed if the other onCanDoLightning check isn't used
     @Redirect(method = "updateBlocks()V", at = @At(value = "INVOKE", target =
             "Lnet/minecraft/world/World;isRaining()Z", ordinal = 0))
-    private boolean onCanDoLightning(World this$0) {
+    private boolean onCanDoLightning0(World this$0) {
         boolean result = this$0.isRaining();
         if (result) {
             float chance = ((IMixinWorldInfo) this.worldInfo).getWeather().getLightningRate();
@@ -198,6 +201,13 @@ public abstract class MixinWorldServer extends World implements IThreadListener,
             }
         }
         return result;
+    }
+
+    @Redirect(method = "updateBlocks()V", at = @At(value = "INVOKE", target =
+            "Lnet/minecraft/world/World;isThundering()Z", ordinal = 0))
+    private boolean onCanDoLightning1(World this$0) {
+        // Just return false, this is already handled by isRaining()
+        return true;
     }
 
     protected Collection<WeatherType> getWeatherTypes() {
@@ -252,25 +262,35 @@ public abstract class MixinWorldServer extends World implements IThreadListener,
             ChangeWorldWeatherEvent weatherEvent = SpongeEventFactory.createChangeWorldWeatherEvent(Sponge.getGame(),
                     Cause.empty(), duration, duration, weather, weather, weather, (org.spongepowered.api.world.World) this);
             Sponge.getGame().getEventManager().post(weatherEvent);
-            current = (WeatherType) weatherEvent.getWeather();
+            weather = (WeatherType) weatherEvent.getWeather();
+            if (weatherEvent.isCancelled()) {
+                weather = current;
+            }
             duration = weatherEvent.getDuration();
             duration0 = duration;
         }
 
+        WeathersPlugin.log().debug("Forecast weather: {} with duration: {}", weather.getName(), duration0);
+
         boolean rain = weather.getRainStrength() > 0f;
         boolean thunder = weather.getThunderRate() > 0f;
 
-        this.worldInfo.setRaining(rain);
-        this.worldInfo.setRainTime(rain ? (int) duration : 0);
-        this.worldInfo.setThundering(thunder);
-        this.worldInfo.setThunderTime(thunder ? (int) duration : 0);
+        this.worldInfo.raining = rain;
+        this.worldInfo.rainTime = rain ? duration : 0;
+        this.worldInfo.thundering = thunder;
+        this.worldInfo.thunderTime = thunder ? duration : 0;
+        this.worldInfo.cleanWeatherTime = (rain || thunder) ? 0 : duration;
 
         long elapsed = 0;
         if (weather == current) {
             elapsed = info.getElapsedWeatherDuration();
-            duration0 = elapsed + info.getWeatherDuration();
+            duration0 = elapsed + duration0;
+        } else {
+            this.rainStrengthTarget = weather.getRainStrength();
+            this.darknessTarget = weather.getDarkness();
         }
 
+        info.setWeather(weather);
         info.setElapsedWeatherDuration(elapsed);
         info.setWeatherDuration(duration0);
     }

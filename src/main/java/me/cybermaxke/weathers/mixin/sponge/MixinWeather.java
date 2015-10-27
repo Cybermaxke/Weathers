@@ -23,11 +23,20 @@
  */
 package me.cybermaxke.weathers.mixin.sponge;
 
+import java.util.Collection;
+import java.util.List;
+
 import me.cybermaxke.weathers.interfaces.IMixinWeather;
 
 import org.spongepowered.api.world.weather.Weather;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.common.weather.SpongeWeather;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 
 @Mixin(value = SpongeWeather.class, remap = false)
 public abstract class MixinWeather implements Weather, IMixinWeather {
@@ -36,6 +45,50 @@ public abstract class MixinWeather implements Weather, IMixinWeather {
     private float thunderRate;
     private float darkness;
     private float rainStrength;
+
+    private List<String> aliases;
+    private String commandMessage;
+    private String identifier;
+
+    public void setCustomIdentifier(String identifier) {
+        this.identifier = identifier;
+    }
+
+    @Inject(method = "getId()Ljava/lang/String;", at = @At("RETURN"), cancellable = true)
+    private void onGetId(CallbackInfoReturnable<String> ci) {
+        if (this.identifier != null) {
+            ci.setReturnValue(this.identifier);
+        } else {
+            // Fix the sponge id, must be lowercase
+            ci.setReturnValue(ci.getReturnValue().toLowerCase());
+        }
+    }
+
+    @Override
+    public String getCommandMessage() {
+        if (this.commandMessage == null) {
+            this.commandMessage = "Changing to " + this.getName() + " weather";
+        }
+        return this.commandMessage;
+    }
+
+    @Override
+    public void setCommandMessage(String message) {
+        this.commandMessage = message;
+    }
+
+    @Override
+    public void setAliases(Collection<String> aliases) {
+        this.aliases = Lists.newArrayList(aliases);
+    }
+
+    @Override
+    public List<String> getAliases() {
+        if (this.aliases == null) {
+            this.aliases = Lists.newArrayList();
+        }
+        return ImmutableList.copyOf(this.aliases);
+    }
 
     @Override
     public float getLightningRate() {

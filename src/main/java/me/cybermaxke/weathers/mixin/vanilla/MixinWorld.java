@@ -51,11 +51,14 @@ public abstract class MixinWorld implements IBlockAccess, World, IMixinWorld {
     @Overwrite
     protected void calculateInitialWeather() {
         IMixinWorldInfo info = (IMixinWorldInfo) this.worldInfo;
+        info.setWorld(this);
         if (info.getWeather() == null) {
             Weather weather;
             int duration;
-            int rainTime = this.worldInfo.getRainTime();
-            int thunderTime = this.worldInfo.getThunderTime();
+            int rainTime = this.worldInfo.raining ? this.worldInfo.getRainTime() : 0;
+            int thunderTime = this.worldInfo.thundering ? this.worldInfo.thunderTime : 0;
+            this.worldInfo.thunderTime = thunderTime;
+            this.worldInfo.rainTime = rainTime;
             if (rainTime <= 0) {
                 weather = Weathers.CLEAR;
                 duration = this.worldInfo.getCleanWeatherTime();
@@ -92,6 +95,24 @@ public abstract class MixinWorld implements IBlockAccess, World, IMixinWorld {
     private void onGetThunderStrength(float delta, CallbackInfoReturnable<Float> ci) {
         if (!this.isRemote) {
             ci.setReturnValue(this.getDarkness());
+        }
+    }
+
+    @Inject(method = "getRainStrength(F)F", at = @At("HEAD"), cancellable = true)
+    private void onGetRainStrength(float delta, CallbackInfoReturnable<Float> ci) {
+        if (!this.isRemote) {
+            ci.setReturnValue(this.getRainStrength());
+        }
+    }
+
+    /**
+     * Make sure that it won't go under zero, this can happen if the darkness < 0
+     */
+    @Inject(method = "calculateSkylightSubtracted(F)I", at = @At("RETURN"), cancellable = true)
+    private void onCalculateSkylightSubtracted(float delta, CallbackInfoReturnable<Integer> ci) {
+        int value = ci.getReturnValueI();
+        if (value < 0) {
+            ci.setReturnValue(0);
         }
     }
 }

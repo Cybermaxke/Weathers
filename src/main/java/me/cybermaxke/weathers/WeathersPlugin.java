@@ -21,25 +21,47 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package me.cybermaxke.weathers.interfaces;
+package me.cybermaxke.weathers;
 
-import org.spongepowered.api.world.World;
+import static me.cybermaxke.weathers.WeathersInfo.NAME;
+import static me.cybermaxke.weathers.WeathersInfo.VERSION;
 
-import me.cybermaxke.weathers.api.WeatherType;
+import org.slf4j.Logger;
 
-public interface IMixinWorldInfo {
+import org.spongepowered.api.event.Listener;
+import org.spongepowered.api.event.game.state.GameInitializationEvent;
+import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
+import org.spongepowered.api.plugin.Plugin;
 
-    void setWorld(World world);
+import com.google.inject.Inject;
 
-    WeatherType getWeather();
+@Plugin(id = NAME, name = NAME, version = VERSION)
+public final class WeathersPlugin {
 
-    void setWeather(WeatherType weatherType);
+    private static WeathersPlugin instance;
 
-    long getWeatherDuration();
+    /**
+     * Gets the {@link Logger} of the plugin.
+     * 
+     * @return the logger
+     */
+    public static Logger log() {
+        return instance.logger;
+    }
 
-    void setWeatherDuration(long duration);
+    @Inject Logger logger;
 
-    long getElapsedWeatherDuration();
+    @Inject
+    private WeathersPlugin() {
+        instance = this;
+    }
 
-    void setElapsedWeatherDuration(long duration);
+    @Listener
+    public void onGamePreInitialization(GamePreInitializationEvent e) {
+        this.logger.info("Loading...");
+    }
+
+    @Listener
+    public void onGameInitialization(GameInitializationEvent e) {
+    }
 }

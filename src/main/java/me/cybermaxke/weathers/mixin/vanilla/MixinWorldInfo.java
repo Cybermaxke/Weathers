@@ -23,14 +23,17 @@
  */
 package me.cybermaxke.weathers.mixin.vanilla;
 
-import static me.cybermaxke.weathers.WeathersMod.PLUGIN_ID;
-
+import org.spongepowered.api.world.World;
+import org.spongepowered.api.world.weather.Weathers;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.common.Sponge;
 
+import me.cybermaxke.weathers.WeathersInfo;
 import me.cybermaxke.weathers.api.WeatherType;
 import me.cybermaxke.weathers.interfaces.IMixinWorldInfo;
 import net.minecraft.nbt.NBTTagCompound;
@@ -39,6 +42,13 @@ import net.minecraft.world.storage.WorldInfo;
 @Mixin(value = WorldInfo.class, priority = 1001)
 public abstract class MixinWorldInfo implements IMixinWorldInfo {
 
+    @Shadow private boolean thundering;
+    @Shadow private boolean raining;
+    @Shadow private int thunderTime;
+    @Shadow private int rainTime;
+    @Shadow private int cleanWeatherTime;
+
+    private World world;
     private WeatherType weather;
 
     private long elapsedWeatherDuration;
@@ -46,8 +56,8 @@ public abstract class MixinWorldInfo implements IMixinWorldInfo {
 
     @Inject(method = "<init>*", at = @At("RETURN"))
     private void onInit(NBTTagCompound nbt, CallbackInfo ci) {
-        if (nbt.hasKey(PLUGIN_ID)) {
-            NBTTagCompound info = nbt.getCompoundTag(PLUGIN_ID);
+        if (nbt.hasKey(WeathersInfo.NAME)) {
+            NBTTagCompound info = nbt.getCompoundTag(WeathersInfo.NAME);
             this.weather =  Sponge.getGame().getRegistry().getType(
                     WeatherType.class, info.getString("type")).orElse(null);
             this.elapsedWeatherDuration = info.getLong("elapsed");
@@ -69,7 +79,76 @@ public abstract class MixinWorldInfo implements IMixinWorldInfo {
         data.setString("type", this.weather.getId());
         data.setLong("elapsed", this.elapsedWeatherDuration);
         data.setLong("duration", this.weatherDuration);
-        nbt.setTag(PLUGIN_ID, data);
+        nbt.setTag(WeathersInfo.NAME, data);
+    }
+
+    @Overwrite
+    public void setCleanWeatherTime(int time) {
+        if (this.world != null) {
+            if (time > 0) {
+                this.world.forecast(Weathers.CLEAR, time);
+            }
+        } else {
+            this.cleanWeatherTime = time;
+        }
+    }
+
+    @Overwrite
+    public void setRainTime(int time) {
+        if (this.world != null) {
+            this.raining = time > 0;
+            if (this.thundering && this.thunderTime > 0 && this.raining) {
+                this.world.forecast(Weathers.THUNDER_STORM, time);
+            } else if (this.raining) {
+                this.world.forecast(Weathers.RAIN, time);
+            } else {
+                this.world.forecast(Weathers.CLEAR, this.cleanWeatherTime);
+            }
+        } else {
+            this.rainTime = time;
+        }
+    }
+
+    @Overwrite
+    public void setThunderTime(int time) {
+        if (this.world != null) {
+            this.thundering = time > 0;
+            if (this.thundering) {
+                this.world.forecast(Weathers.THUNDER_STORM, time);
+            } else if (this.raining && this.rainTime > 0) {
+                this.world.forecast(Weathers.RAIN, this.rainTime);
+            } else {
+                this.world.forecast(Weathers.CLEAR, this.cleanWeatherTime);
+            }
+        } else {
+            this.thunderTime = time;
+        }
+    }
+
+    @Overwrite
+    public void setThundering(boolean flag) {
+        if (this.world != null) {
+            if (!flag) {
+                if (this.raining && this.rainTime > 0) {
+                    this.world.forecast(Weathers.RAIN, this.rainTime);
+                } else {
+                    this.world.forecast(Weathers.CLEAR, this.cleanWeatherTime);
+                }
+            }
+        } else {
+            this.raining = flag;
+        }
+    }
+
+    @Overwrite
+    public void setRaining(boolean flag) {
+        if (this.world != null) {
+            if (!flag) {
+                this.world.forecast(Weathers.CLEAR, this.cleanWeatherTime);
+            }
+        } else {
+            this.raining = flag;
+        }
     }
 
     @Override
@@ -100,5 +179,10 @@ public abstract class MixinWorldInfo implements IMixinWorldInfo {
     @Override
     public void setElapsedWeatherDuration(long duration) {
         this.elapsedWeatherDuration = duration;
+    }
+
+    @Override
+    public void setWorld(World world) {
+        this.world = world;
     }
 }

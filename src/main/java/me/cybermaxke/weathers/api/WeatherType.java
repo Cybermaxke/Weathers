@@ -23,9 +23,13 @@
  */
 package me.cybermaxke.weathers.api;
 
+import java.util.List;
+
 import org.spongepowered.api.world.weather.Weather;
 
 public interface WeatherType extends Weather {
+
+    List<String> getAliases();
 
     float getLightningRate();
 

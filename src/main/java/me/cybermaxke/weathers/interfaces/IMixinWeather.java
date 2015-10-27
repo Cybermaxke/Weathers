@@ -23,9 +23,19 @@
  */
 package me.cybermaxke.weathers.interfaces;
 
+import java.util.Collection;
+
 import me.cybermaxke.weathers.api.WeatherType;
 
 public interface IMixinWeather extends WeatherType {
+
+    String getCommandMessage();
+
+    void setCustomIdentifier(String identifier);
+
+    void setCommandMessage(String message);
+
+    void setAliases(Collection<String> aliases);
 
     void setLightningRate(float rate);
 

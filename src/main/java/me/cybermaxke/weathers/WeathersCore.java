@@ -23,16 +23,18 @@
  */
 package me.cybermaxke.weathers;
 
-import java.io.File;
 import java.util.Map;
 
 import org.spongepowered.asm.mixin.MixinEnvironment;
 
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
+import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin.MCVersion;
 
+import static me.cybermaxke.weathers.WeathersInfo.NAME;
+import static me.cybermaxke.weathers.WeathersInfo.MINECRAFT;
+
+@MCVersion(MINECRAFT)
 public final class WeathersCore implements IFMLLoadingPlugin {
-
-    static File sourceLocation;
 
     @Override
     public String[] getASMTransformerClass() {
@@ -46,7 +48,7 @@ public final class WeathersCore implements IFMLLoadingPlugin {
 
     @Override
     public String getModContainerClass() {
-        return "me.cybermaxke.weathers.WeathersMod";
+        return null;
     }
 
     @Override
@@ -56,14 +58,11 @@ public final class WeathersCore implements IFMLLoadingPlugin {
 
     @Override
     public void injectData(Map<String, Object> data) {
-        System.out.println("Loading " + WeathersMod.PLUGIN_ID + " mixins...");
-
-        // Retrieve the source location
-        sourceLocation = (File) data.get("coremodLocation");
+        System.out.println("Loading " + NAME + " mixins...");
 
         // Add default mixins
         // The path is CASE SENSITIVE, so be careful
         MixinEnvironment.getDefaultEnvironment().addConfiguration(
-                "mixins." + WeathersMod.PLUGIN_ID.toLowerCase() + ".json");
+                "mixins." + NAME.toLowerCase() + ".json");
     }
 }

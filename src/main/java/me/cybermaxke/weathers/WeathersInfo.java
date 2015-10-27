@@ -21,25 +21,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package me.cybermaxke.weathers.interfaces;
+package me.cybermaxke.weathers;
 
-import org.spongepowered.api.world.World;
+public final class WeathersInfo {
 
-import me.cybermaxke.weathers.api.WeatherType;
+    public final static String NAME = "Weathers";
+    public final static String VERSION = "dev-SNAPSHOT";
+    public final static String MINECRAFT = "1.8";
 
-public interface IMixinWorldInfo {
-
-    void setWorld(World world);
-
-    WeatherType getWeather();
-
-    void setWeather(WeatherType weatherType);
-
-    long getWeatherDuration();
-
-    void setWeatherDuration(long duration);
-
-    long getElapsedWeatherDuration();
-
-    void setElapsedWeatherDuration(long duration);
+    private WeathersInfo() {
+    }
 }

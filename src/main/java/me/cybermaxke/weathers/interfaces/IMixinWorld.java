@@ -29,6 +29,8 @@ public interface IMixinWorld {
 
     float getRainStrength();
 
+    float getTargetRainStrength();
+
     float getDarkness();
 
     boolean isWeatherOptimal();

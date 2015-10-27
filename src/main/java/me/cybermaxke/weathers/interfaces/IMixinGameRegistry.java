@@ -23,9 +23,17 @@
  */
 package me.cybermaxke.weathers.interfaces;
 
+import java.util.Map;
+
 import me.cybermaxke.weathers.api.WeatherType;
 
 public interface IMixinGameRegistry {
 
     void registerWeather(WeatherType weatherType);
+
+    Map<String, WeatherType> getWeathers();
+
+    Map<String, WeatherType> getWeatherAliases();
+
+    WeatherType findWeather(String name);
 }

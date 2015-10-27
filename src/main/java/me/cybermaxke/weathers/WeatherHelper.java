@@ -28,8 +28,7 @@ public final class WeatherHelper {
     public static final float FADE_SPEED = 0.01f;
 
     public static float getThunderStrengthValue(float rainStrength, float darkness) {
-        rainStrength = getRainStrengthValue(rainStrength);
-        return (darkness > 4f ? 4f : darkness) / rainStrength;
+        return (darkness > 4f ? 4f : darkness) / getRainStrengthValue(rainStrength);
     }
 
     public static float getRainStrengthValue(float rainStrength) {

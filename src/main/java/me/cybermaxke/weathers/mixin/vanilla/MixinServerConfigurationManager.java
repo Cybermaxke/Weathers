@@ -53,7 +53,6 @@ public abstract class MixinServerConfigurationManager {
                 worldIn.getGameRules().getGameRuleBooleanValue("doDaylightCycle")));
 
         IMixinWorld world = (IMixinWorld) worldIn;
-        playerIn.playerNetServerHandler.sendPacket(new S2BPacketChangeGameState(1, 0.0F));
         playerIn.playerNetServerHandler.sendPacket(new S2BPacketChangeGameState(7,
                 getRainStrengthValue(world.getRainStrength())));
         playerIn.playerNetServerHandler.sendPacket(new S2BPacketChangeGameState(8,
