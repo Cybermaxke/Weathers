@@ -41,10 +41,6 @@ import net.minecraft.world.border.WorldBorder;
 @Mixin(value = ServerConfigurationManager.class, priority = 1001)
 public abstract class MixinServerConfigurationManager {
 
-    /**
-     * We need to overwrite this method because sponge is also doing this,
-     * we cannot catch the original method, so overriding sponge.
-     */
     @Overwrite
     public void updateTimeAndWeatherForPlayer(EntityPlayerMP playerIn, WorldServer worldIn) {
         WorldBorder worldborder = worldIn.getWorldBorder();

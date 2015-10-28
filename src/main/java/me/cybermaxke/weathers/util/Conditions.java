@@ -63,7 +63,7 @@ public final class Conditions {
         }
 
         Optional<PluginContainer> container = game.getPluginManager().fromInstance(object);
-        checkArgument(container.isPresent(), (message != null ? message + ": " : "") + "invalid plugin ({})", object);
+        checkArgument(container.isPresent(), (message != null ? message + ": " : "") + "invalid plugin (%s)", object);
         return container.get();
     }
 

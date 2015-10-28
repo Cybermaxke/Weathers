@@ -103,7 +103,7 @@ public abstract class MixinGameRegistry implements GameRegistry, IMixinGameRegis
     public void registerWeather(WeatherType weatherType) {
         checkNotNull(weatherType, "weatherType");
         String id = weatherType.getId().toLowerCase();
-        checkState(this.weatherMappings.containsKey(weatherType.getId()),
+        checkState(!this.weatherMappings.containsKey(id),
                 "identifier is already used: " + weatherType.getId());
         String name = weatherType.getName().toLowerCase();
         this.weatherMappings.put(id, weatherType);

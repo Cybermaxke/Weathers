@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
+import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.service.ProviderExistsException;
@@ -87,5 +88,24 @@ public final class WeathersPlugin {
 
     @Listener
     public void onGameInitialization(GameInitializationEvent e) {
+        // Register some test weathers
+        this.weatherService.createBuilder().plugin(this).name("mizzle")
+                .darkness(0.1f).rainStrength(0.2f).buildAndRegister();
+        this.weatherService.createBuilder().plugin(this).name("drizzle")
+                .darkness(0.13f).rainStrength(0.3f).buildAndRegister();
+        this.weatherService.createBuilder().plugin(this).name("light_rain")
+                .darkness(0.2f).rainStrength(0.6f).buildAndRegister();
+        this.weatherService.createBuilder().plugin(this).name("medium_rain")
+                .darkness(0.4f).rainStrength(1.0f).buildAndRegister();
+        this.weatherService.createBuilder().plugin(this).name("heavy_rain")
+                .darkness(0.5f).rainStrength(1.3f).buildAndRegister();
+        this.weatherService.createBuilder().plugin(this).name("storm")
+                .darkness(1.0f).rainStrength(1.0f).lightningRate(0.00003f).buildAndRegister();
+        this.weatherService.createBuilder().plugin(this).name("heavy_storm")
+                .darkness(1.3f).rainStrength(1.3f).lightningRate(0.0001f).buildAndRegister();
+    }
+
+    @Listener
+    public void onGamePostInitialization(GamePostInitializationEvent e) {
     }
 }

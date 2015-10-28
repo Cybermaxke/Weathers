@@ -35,9 +35,9 @@ ext.minecraftVersion = '1.8'
 // The mcp mappings we will use
 ext.minecraftMappings = 'snapshot_20150301'
 // The forge version we will use
-ext.forgeBuild = '1524'
+ext.forgeBuild = '1530'
 // The sponge version
-ext.spongeVersion = '2.1-DEV-762'
+ext.spongeVersion = '2.1-DEV-767'
 
 // The forge plugin instance
 ext.forgePlugin = plugins.getPlugin('net.minecraftforge.gradle.forge')
@@ -47,7 +47,7 @@ forgePlugin.replacer.putReplacement('SRG_DIR', "${net.minecraftforge.gradle.comm
 // Repositories
 repositories {
     mavenCentral()
-    maven {
+   	maven {
         url 'http://repo.spongepowered.org/maven'
     }
     maven {
