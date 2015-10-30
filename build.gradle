@@ -58,9 +58,8 @@ repositories {
 // Project dependencies
 dependencies {
     compile "org.spongepowered:mixin:0.4.6-SNAPSHOT"
-    // TODO: Get the de-obfuscated jar?
     compile("org.spongepowered:spongeforge:${minecraftVersion}-${forgeBuild}-${spongeVersion}") {
-        transitive = false
+    	transitive = false
     }
 }
 
@@ -113,11 +112,11 @@ reobfJar.doFirst {
 
 // Set manifest entries
 jar {
-   classifier = ''
-   from project.mixinRefMap
+    classifier = ''
+    from project.mixinRefMap
 
     manifest {
-       attributes(
+        attributes(
             'TargetForgeBuild': forgeBuild,
             'TargetForgeVersion': minecraft.forgeVersion,
             'FMLCorePlugin': 'me.cybermaxke.weathers.WeathersCore',
