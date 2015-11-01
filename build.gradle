@@ -12,6 +12,7 @@ buildscript {
 
 plugins {
     id "com.github.hierynomus.license" version "0.12.0"
+    //id "de.undercouch.download" version "2.0.0"
 }
 
 // Apply plugin
@@ -55,11 +56,33 @@ repositories {
     }
 }
 
+//import de.undercouch.gradle.tasks.download.Download
+//task downloadFile(type: Download) {
+//    src "http://files.minecraftforge.net/maven/org/spongepowered/spongeforge/${minecraftVersion}-${forgeBuild}-${spongeVersion}/spongeforge-${minecraftVersion}-${forgeBuild}-${spongeVersion}-deobf.jar"
+//    dest "${buildDir}/dependencies/spongeforge-deobf.jar"
+//    onlyIfNewer true
+//}
+//setupDecompWorkspace.dependsOn downloadFile
+//setupDevWorkspace.dependsOn downloadFile
+//compileJava.dependsOn downloadFile
+//eclipseProject.dependsOn downloadFile
+
 // Project dependencies
 dependencies {
     compile "org.spongepowered:mixin:0.4.6-SNAPSHOT"
+    compile files("${buildDir}/dependencies/spongeforge-deobf.jar")
     compile("org.spongepowered:spongeforge:${minecraftVersion}-${forgeBuild}-${spongeVersion}") {
-    	transitive = false
+        transitive = false
+    }
+}
+
+// Make sure that the order is right
+eclipse.classpath.file {
+    whenMerged { classpath ->
+        def lib1 = classpath.entries.find { it.path.contains('spongeforge-deobf.jar') }
+        def lib2 = classpath.entries.find { it.path.contains('org.spongepowered/spongeforge') }
+        def others = classpath.entries.findAll { it != lib1 && it != lib2 }
+        classpath.entries = others + lib1 + lib2
     }
 }
 
