@@ -21,15 +21,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package me.cybermaxke.weathers;
+package me.cybermaxke.weathers.interfaces;
 
-import me.cybermaxke.weathers.api.WeatherBuilder;
-import me.cybermaxke.weathers.api.WeatherService;
+import java.util.Map;
 
-public final class SimpleWeatherService implements WeatherService {
+import org.spongepowered.api.world.weather.Weather;
+import org.spongepowered.common.registry.AdditionalCatalogRegistryModule;
 
-    @Override
-    public WeatherBuilder createBuilder() {
-        return new SimpleWeatherBuilder();
-    }
+import me.cybermaxke.weathers.api.WeatherType;
+
+public interface IMixinWeatherRegistryModule extends AdditionalCatalogRegistryModule<Weather> {
+
+    Map<String, WeatherType> getWeathers();
+
+    Map<String, WeatherType> getWeatherAliases();
+
+    WeatherType findWeather(String name);
 }

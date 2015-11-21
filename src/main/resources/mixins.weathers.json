@@ -8,7 +8,7 @@
         "vanilla.MixinWorld",
         "vanilla.MixinWorldInfo",
         "vanilla.MixinWorldServer",
-        "sponge.MixinGameRegistry",
+        "sponge.MixinWeatherRegistryModule",
         "sponge.MixinWeather"
     ]
 }

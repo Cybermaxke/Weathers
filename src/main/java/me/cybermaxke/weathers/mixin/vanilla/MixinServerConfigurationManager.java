@@ -43,12 +43,12 @@ public abstract class MixinServerConfigurationManager {
 
     @Overwrite
     public void updateTimeAndWeatherForPlayer(EntityPlayerMP playerIn, WorldServer worldIn) {
-        WorldBorder worldborder = worldIn.getWorldBorder();
+        final WorldBorder worldborder = worldIn.getWorldBorder();
         playerIn.playerNetServerHandler.sendPacket(new S44PacketWorldBorder(worldborder, S44PacketWorldBorder.Action.INITIALIZE));
         playerIn.playerNetServerHandler.sendPacket(new S03PacketTimeUpdate(worldIn.getTotalWorldTime(), worldIn.getWorldTime(),
                 worldIn.getGameRules().getGameRuleBooleanValue("doDaylightCycle")));
 
-        IMixinWorld world = (IMixinWorld) worldIn;
+        final IMixinWorld world = (IMixinWorld) worldIn;
         playerIn.playerNetServerHandler.sendPacket(new S2BPacketChangeGameState(7,
                 getRainStrengthValue(world.getRainStrength())));
         playerIn.playerNetServerHandler.sendPacket(new S2BPacketChangeGameState(8,

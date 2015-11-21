@@ -57,7 +57,7 @@ public abstract class MixinWorldInfo implements IMixinWorldInfo {
     @Inject(method = "<init>*", at = @At("RETURN"))
     private void onInit(NBTTagCompound nbt, CallbackInfo ci) {
         if (nbt.hasKey(WeathersInfo.NAME)) {
-            NBTTagCompound info = nbt.getCompoundTag(WeathersInfo.NAME);
+            final NBTTagCompound info = nbt.getCompoundTag(WeathersInfo.NAME);
             this.weather =  Sponge.getGame().getRegistry().getType(
                     WeatherType.class, info.getString("type")).orElse(null);
             this.elapsedWeatherDuration = info.getLong("elapsed");
@@ -67,7 +67,7 @@ public abstract class MixinWorldInfo implements IMixinWorldInfo {
 
     @Inject(method = "<init>*", at = @At("RETURN"))
     private void onInit(WorldInfo info0, CallbackInfo ci) {
-        IMixinWorldInfo info = (IMixinWorldInfo) info0;
+        final IMixinWorldInfo info = (IMixinWorldInfo) info0;
         this.weather = info.getWeather();
         this.elapsedWeatherDuration = info.getElapsedWeatherDuration();
         this.weatherDuration = info.getWeatherDuration();
@@ -75,7 +75,7 @@ public abstract class MixinWorldInfo implements IMixinWorldInfo {
 
     @Inject(method = "updateTagCompound", at = @At("RETURN"))
     private void onSave(NBTTagCompound nbt, NBTTagCompound playerNbt, CallbackInfo ci) {
-        NBTTagCompound data = new NBTTagCompound();
+        final NBTTagCompound data = new NBTTagCompound();
         data.setString("type", this.weather.getId());
         data.setLong("elapsed", this.elapsedWeatherDuration);
         data.setLong("duration", this.weatherDuration);

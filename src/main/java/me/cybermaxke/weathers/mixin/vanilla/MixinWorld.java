@@ -50,10 +50,10 @@ public abstract class MixinWorld implements IBlockAccess, World, IMixinWorld {
 
     @Overwrite
     protected void calculateInitialWeather() {
-        IMixinWorldInfo info = (IMixinWorldInfo) this.worldInfo;
+        final IMixinWorldInfo info = (IMixinWorldInfo) this.worldInfo;
         info.setWorld(this);
         if (info.getWeather() == null) {
-            Weather weather;
+            final Weather weather;
             int duration;
             int rainTime = this.worldInfo.raining ? this.worldInfo.getRainTime() : 0;
             int thunderTime = this.worldInfo.thundering ? this.worldInfo.thunderTime : 0;
@@ -86,7 +86,7 @@ public abstract class MixinWorld implements IBlockAccess, World, IMixinWorld {
     @Inject(method = "isThundering()Z", at = @At("HEAD"), cancellable = true)
     private void onIsThundering(CallbackInfoReturnable<Boolean> ci) {
         if (!this.isRemote) {
-            IMixinWorldInfo info = (IMixinWorldInfo) this.worldInfo;
+            final IMixinWorldInfo info = (IMixinWorldInfo) this.worldInfo;
             ci.setReturnValue(info.getWeather().getThunderRate() > 0f && this.isWeatherOptimal());
         }
     }

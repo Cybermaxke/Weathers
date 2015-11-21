@@ -25,7 +25,11 @@ package me.cybermaxke.weathers;
 
 import static me.cybermaxke.weathers.WeathersInfo.NAME;
 import static me.cybermaxke.weathers.WeathersInfo.VERSION;
-import me.cybermaxke.weathers.api.WeatherService;
+
+import java.util.function.Supplier;
+
+import me.cybermaxke.weathers.api.WeatherBuilder;
+import me.cybermaxke.weathers.api.WeatherType;
 
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
@@ -35,6 +39,10 @@ import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.service.ProviderExistsException;
+import org.spongepowered.api.world.weather.Weather;
+import org.spongepowered.common.Sponge;
+import org.spongepowered.common.registry.CatalogRegistryModule;
+import org.spongepowered.common.registry.SpongeGameRegistry;
 
 import com.google.inject.Inject;
 
@@ -64,44 +72,44 @@ public final class WeathersPlugin {
     @Inject private Logger logger;
     @Inject private Game game;
 
-    private WeatherService weatherService;
-
     @Inject
     private WeathersPlugin() {
         instance = this;
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     @Listener
     public void onGamePreInitialization(GamePreInitializationEvent e) {
         this.logger.info("Loading...");
 
-        // Create the weather service
-        this.weatherService = new SimpleWeatherService();
+        // Get the sponge registry
+        final SpongeGameRegistry registry = Sponge.getGame().getRegistry();
 
-        // Set the weather service
-        try {
-            this.game.getServiceManager().setProvider(this, WeatherService.class, this.weatherService);
-        } catch (ProviderExistsException ex) {
-            throw new IllegalStateException("The WeatherService is overriden by an unknown source.", ex);
-        }
+        // Register the weather builder
+        registry.registerBuilderSupplier(WeatherBuilder.class, () -> new SimpleWeatherBuilder());
+
+        // Register the module also for the child type
+        final CatalogRegistryModule<Weather> module = registry.getRegistryModuleFor(Weather.class);
+        registry.registerModule(WeatherType.class, (CatalogRegistryModule) module);
     }
 
     @Listener
     public void onGameInitialization(GameInitializationEvent e) {
+        final WeatherBuilder builder = e.getGame().getRegistry().createBuilder(WeatherBuilder.class);
         // Register some test weathers
-        this.weatherService.createBuilder().plugin(this).name("mizzle")
+        builder.reset().plugin(this).name("mizzle")
                 .darkness(0.1f).rainStrength(0.2f).buildAndRegister();
-        this.weatherService.createBuilder().plugin(this).name("drizzle")
+        builder.reset().plugin(this).name("drizzle")
                 .darkness(0.13f).rainStrength(0.3f).buildAndRegister();
-        this.weatherService.createBuilder().plugin(this).name("light_rain")
+        builder.reset().plugin(this).name("light_rain")
                 .darkness(0.2f).rainStrength(0.6f).buildAndRegister();
-        this.weatherService.createBuilder().plugin(this).name("medium_rain")
+        builder.reset().plugin(this).name("medium_rain")
                 .darkness(0.4f).rainStrength(1.0f).buildAndRegister();
-        this.weatherService.createBuilder().plugin(this).name("heavy_rain")
+        builder.reset().plugin(this).name("heavy_rain")
                 .darkness(0.5f).rainStrength(1.3f).buildAndRegister();
-        this.weatherService.createBuilder().plugin(this).name("storm")
+        builder.reset().plugin(this).name("storm")
                 .darkness(1.0f).rainStrength(1.0f).lightningRate(0.00003f).buildAndRegister();
-        this.weatherService.createBuilder().plugin(this).name("heavy_storm")
+        builder.reset().plugin(this).name("heavy_storm")
                 .darkness(1.3f).rainStrength(1.3f).lightningRate(0.0001f).buildAndRegister();
     }
 

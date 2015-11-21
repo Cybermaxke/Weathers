@@ -23,7 +23,9 @@
  */
 package me.cybermaxke.weathers.api;
 
-public interface WeatherBuilder {
+import org.spongepowered.api.util.ResettableBuilder;
+
+public interface WeatherBuilder extends ResettableBuilder<WeatherBuilder> {
 
     WeatherBuilder plugin(Object plugin);
 

@@ -30,14 +30,16 @@ import static me.cybermaxke.weathers.util.Conditions.checkPlugin;
 import java.util.List;
 
 import org.spongepowered.api.plugin.PluginContainer;
+import org.spongepowered.api.world.weather.Weather;
 import org.spongepowered.common.Sponge;
+import org.spongepowered.common.registry.CatalogRegistryModule;
 import org.spongepowered.common.weather.SpongeWeather;
 
 import com.google.common.collect.Lists;
 
 import me.cybermaxke.weathers.api.WeatherBuilder;
 import me.cybermaxke.weathers.api.WeatherType;
-import me.cybermaxke.weathers.interfaces.IMixinGameRegistry;
+import me.cybermaxke.weathers.interfaces.IMixinWeatherRegistryModule;
 import me.cybermaxke.weathers.interfaces.IMixinWeather;
 
 public final class SimpleWeatherBuilder implements WeatherBuilder {
@@ -50,6 +52,18 @@ public final class SimpleWeatherBuilder implements WeatherBuilder {
     private float darkness;
     private float lightningRate;
     private float thunderRate;
+
+    @Override
+    public WeatherBuilder reset() {
+        this.plugin = null;
+        this.aliases.clear();
+        this.name = null;
+        this.rainStrength = 0f;
+        this.darkness = 0f;
+        this.lightningRate = 0f;
+        this.thunderRate = 0f;
+        return this;
+    }
 
     @Override
     public WeatherBuilder plugin(Object plugin) {
@@ -97,17 +111,18 @@ public final class SimpleWeatherBuilder implements WeatherBuilder {
     public WeatherType buildAndRegister() {
         checkState(this.name != null, "name is not set");
         checkState(this.plugin != null, "plugin is not set");
-        IMixinGameRegistry registry = (IMixinGameRegistry) Sponge.getGame().getRegistry();
-        checkState(registry.getWeathers().get(this.name) == null, "name is in use");
-        IMixinWeather weather = (IMixinWeather) new SpongeWeather(this.name);
+        final CatalogRegistryModule<Weather> module = Sponge.getGame().getRegistry()
+                .getRegistryModuleFor(Weather.class);
+        final IMixinWeatherRegistryModule module0 = (IMixinWeatherRegistryModule) module;
+        checkState(module0.getWeathers().get(this.name) == null, "name is in use");
+        final IMixinWeather weather = (IMixinWeather) new SpongeWeather(this.name);
         weather.setCustomIdentifier(this.plugin.getId().toLowerCase() + ":" + this.name);
         weather.setAliases(this.aliases);
         weather.setDarkness(this.darkness);
         weather.setRainStrength(this.rainStrength);
         weather.setLightningRate(this.lightningRate);
         weather.setThunderRate(this.thunderRate);
-        registry.registerWeather(weather);
+        module0.registerAdditionalCatalog(weather);
         return weather;
     }
-
 }

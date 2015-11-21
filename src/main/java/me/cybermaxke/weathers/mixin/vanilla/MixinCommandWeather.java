@@ -26,11 +26,13 @@ package me.cybermaxke.weathers.mixin.vanilla;
 import java.util.List;
 
 import org.spongepowered.api.world.World;
+import org.spongepowered.api.world.weather.Weather;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.common.Sponge;
+import org.spongepowered.common.registry.CatalogRegistryModule;
 
-import me.cybermaxke.weathers.interfaces.IMixinGameRegistry;
+import me.cybermaxke.weathers.interfaces.IMixinWeatherRegistryModule;
 import me.cybermaxke.weathers.interfaces.IMixinWeather;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandWeather;
@@ -58,7 +60,10 @@ public abstract class MixinCommandWeather extends CommandBase {
             throw new WrongUsageException(USAGE);
         }
 
-        IMixinWeather weather = (IMixinWeather) ((IMixinGameRegistry) Sponge.getGame().getRegistry()).findWeather(args[0]);
+        final CatalogRegistryModule<Weather> module = Sponge.getGame().getRegistry()
+                .getRegistryModuleFor(Weather.class);
+        final IMixinWeatherRegistryModule module0 = (IMixinWeatherRegistryModule) module;
+        final IMixinWeather weather = (IMixinWeather) module0.findWeather(args[0]);
         if (weather == null) {
             throw new WrongUsageException(USAGE);
         }
@@ -78,8 +83,10 @@ public abstract class MixinCommandWeather extends CommandBase {
     @Override
     public List<String> addTabCompletionOptions(ICommandSender sender, String[] args, BlockPos pos) {
         if (args.length == 1) {
-            return getListOfStringsMatchingLastWord(args, ((IMixinGameRegistry) Sponge.getGame().getRegistry())
-                    .getWeatherAliases().keySet());
+            final CatalogRegistryModule<Weather> module = Sponge.getGame().getRegistry()
+                    .getRegistryModuleFor(Weather.class);
+            final IMixinWeatherRegistryModule module0 = (IMixinWeatherRegistryModule) module;
+            return getListOfStringsMatchingLastWord(args, module0.getWeatherAliases().keySet());
         }
         return null;
     }
