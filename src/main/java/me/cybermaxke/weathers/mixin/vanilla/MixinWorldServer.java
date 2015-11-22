@@ -31,6 +31,7 @@ import static me.cybermaxke.weathers.WeatherHelper.getThunderStrengthValue;
 import java.util.Collection;
 import java.util.List;
 
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.event.SpongeEventFactory;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.world.ChangeWorldWeatherEvent;
@@ -43,7 +44,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.common.Sponge;
 
 import com.google.common.collect.Lists;
 

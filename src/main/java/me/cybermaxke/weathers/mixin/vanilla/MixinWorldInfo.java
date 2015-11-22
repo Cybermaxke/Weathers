@@ -23,6 +23,7 @@
  */
 package me.cybermaxke.weathers.mixin.vanilla;
 
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.world.World;
 import org.spongepowered.api.world.weather.Weathers;
 import org.spongepowered.asm.mixin.Mixin;
@@ -31,11 +32,11 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.common.Sponge;
 
 import me.cybermaxke.weathers.WeathersInfo;
 import me.cybermaxke.weathers.api.WeatherType;
 import me.cybermaxke.weathers.interfaces.IMixinWorldInfo;
+
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.storage.WorldInfo;
 

@@ -29,7 +29,7 @@ import org.spongepowered.api.world.World;
 import org.spongepowered.api.world.weather.Weather;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.common.Sponge;
+import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.registry.CatalogRegistryModule;
 
 import me.cybermaxke.weathers.interfaces.IMixinWeatherRegistryModule;
@@ -60,7 +60,7 @@ public abstract class MixinCommandWeather extends CommandBase {
             throw new WrongUsageException(USAGE);
         }
 
-        final CatalogRegistryModule<Weather> module = Sponge.getGame().getRegistry()
+        final CatalogRegistryModule<Weather> module = SpongeImpl.getGame().getRegistry()
                 .getRegistryModuleFor(Weather.class);
         final IMixinWeatherRegistryModule module0 = (IMixinWeatherRegistryModule) module;
         final IMixinWeather weather = (IMixinWeather) module0.findWeather(args[0]);
@@ -83,7 +83,7 @@ public abstract class MixinCommandWeather extends CommandBase {
     @Override
     public List<String> addTabCompletionOptions(ICommandSender sender, String[] args, BlockPos pos) {
         if (args.length == 1) {
-            final CatalogRegistryModule<Weather> module = Sponge.getGame().getRegistry()
+            final CatalogRegistryModule<Weather> module = SpongeImpl.getGame().getRegistry()
                     .getRegistryModuleFor(Weather.class);
             final IMixinWeatherRegistryModule module0 = (IMixinWeatherRegistryModule) module;
             return getListOfStringsMatchingLastWord(args, module0.getWeatherAliases().keySet());

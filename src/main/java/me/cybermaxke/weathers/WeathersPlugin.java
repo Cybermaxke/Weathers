@@ -26,21 +26,19 @@ package me.cybermaxke.weathers;
 import static me.cybermaxke.weathers.WeathersInfo.NAME;
 import static me.cybermaxke.weathers.WeathersInfo.VERSION;
 
-import java.util.function.Supplier;
-
 import me.cybermaxke.weathers.api.WeatherBuilder;
 import me.cybermaxke.weathers.api.WeatherType;
 
 import org.slf4j.Logger;
+
 import org.spongepowered.api.Game;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.plugin.Plugin;
-import org.spongepowered.api.service.ProviderExistsException;
 import org.spongepowered.api.world.weather.Weather;
-import org.spongepowered.common.Sponge;
+import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.registry.CatalogRegistryModule;
 import org.spongepowered.common.registry.SpongeGameRegistry;
 
@@ -83,7 +81,7 @@ public final class WeathersPlugin {
         this.logger.info("Loading...");
 
         // Get the sponge registry
-        final SpongeGameRegistry registry = Sponge.getGame().getRegistry();
+        final SpongeGameRegistry registry = SpongeImpl.getGame().getRegistry();
 
         // Register the weather builder
         registry.registerBuilderSupplier(WeatherBuilder.class, () -> new SimpleWeatherBuilder());

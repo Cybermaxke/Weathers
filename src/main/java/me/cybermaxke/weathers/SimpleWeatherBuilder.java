@@ -31,7 +31,7 @@ import java.util.List;
 
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.world.weather.Weather;
-import org.spongepowered.common.Sponge;
+import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.registry.CatalogRegistryModule;
 import org.spongepowered.common.weather.SpongeWeather;
 
@@ -111,7 +111,7 @@ public final class SimpleWeatherBuilder implements WeatherBuilder {
     public WeatherType buildAndRegister() {
         checkState(this.name != null, "name is not set");
         checkState(this.plugin != null, "plugin is not set");
-        final CatalogRegistryModule<Weather> module = Sponge.getGame().getRegistry()
+        final CatalogRegistryModule<Weather> module = SpongeImpl.getGame().getRegistry()
                 .getRegistryModuleFor(Weather.class);
         final IMixinWeatherRegistryModule module0 = (IMixinWeatherRegistryModule) module;
         checkState(module0.getWeathers().get(this.name) == null, "name is in use");

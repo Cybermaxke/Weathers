@@ -37,7 +37,7 @@ ext.minecraftMappings = 'snapshot_20150301'
 // The forge version we will use
 ext.forgeBuild = '1568'
 // The sponge version
-ext.spongeVersion = '2.1-DEV-833'
+ext.spongeVersion = '2.1-DEV-834'
 
 // The forge plugin instance
 ext.forgePlugin = plugins.getPlugin('net.minecraftforge.gradle.forge')
